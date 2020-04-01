@@ -4,11 +4,11 @@
 
 The GraphQL Python ecosystem (i.e. `graphene`) lacks a proper way of validating input and returning meaningful errors to the client. This PoC aims at solving that. The client will know it needs to look into `extensions` for validation errors because of the error message `ValidationError`.
 
-This library provides a class decorator `validate`, for mutations, that allows for field level and input level validation similarly to [DRF](https://www.django-rest-framework.org/) serializers' `validate` methods.
+This library provides a class decorator `validate`, for mutations, that allows for field level and input level validation similarly to [DRF](https://www.django-rest-framework.org/) serializers' `validate` methods. To validate a field you'll need to declare a static method named `validate_{field_name}`. Input wide validation (e.g. for fields that depend on other fields) can be performed in the `validate` method. `validate` will only be called if all field level validation methods succeed.
 
 Field level errors also provide a `path` field that helps the client determine which slice of input is invalid, useful for rich forms and field highlighting on the UI.
 
-Custom errors can be defined (e.g. `NotInRange` with `min` and `max`) to inform the clients of potential constraints on the input itself. It also supports recursive validation so that you can use nested `InputField`s and validation will be run all the way down to the scalars.
+Custom errors can be defined (extending `ValidationError`, e.g. `NotInRange` with `min` and `max`) to inform the clients of potential constraints on the input itself (via an optional `meta` property). It also supports recursive validation so that you can use nested `InputField`s and validation will be performed all the way down to the scalars.
 
 Note that verbose messages aren't supported because I strongly believe those should be handled on the client (together with localization).
 
