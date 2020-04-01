@@ -1,12 +1,13 @@
-import graphene
 import functools
 
+import graphene
 from graphene import List, Scalar
 from graphene.types.inputfield import InputField
 from graphql import GraphQLError
 
 from .errors import ValidationError
-from .utils import _get_path, _to_camel_case, _unpack_input_tree, _unwrap_validator
+from .utils import (_get_path, _to_camel_case, _unpack_input_tree,
+                    _unwrap_validator)
 
 
 def validated(cls):

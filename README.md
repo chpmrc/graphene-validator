@@ -14,6 +14,8 @@ Note that verbose messages aren't supported because I strongly believe those sho
 
 ## Usage
 
+### Validating a mutation's input
+
 Here is an example usage (which you can find in [tests.py](tests.py) as well):
 
 ```python
@@ -94,6 +96,22 @@ And this is an example output:
             ],
             ...
         }
+```
+
+### Manipulating input
+
+```python
+class TestInput(graphene.InputObjectType):
+    expensive_object = graphene.Field(ExpensiveObjectType)
+    
+    @staticmethod
+    def validate_expensive_object(expensive_object_id):
+        obj = ExpensiveModel.objects.filter(pk=expensive_object_id).first()
+        if not obj:
+            raise ObjectNotFound
+        return obj
+
+    ...
 ```
 
 ## Running tests
