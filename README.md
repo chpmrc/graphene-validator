@@ -17,6 +17,9 @@ Note that verbose messages aren't supported because I strongly believe those sho
 Here is an example usage (which you can find in [tests.py](tests.py) as well):
 
 ```python
+import graphene
+from input_validator.decorators import validated
+
 class TestInput(graphene.InputObjectType):
     email = graphene.String()
     people = graphene.List(PersonalDataInput)
