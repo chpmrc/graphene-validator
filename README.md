@@ -8,9 +8,9 @@ This library provides a class decorator `validate`, for mutations, that allows f
 
 Field level errors also provide a `path` field that helps the client determine which slice of input is invalid, useful for rich forms and field highlighting on the UI.
 
-Custom errors can be defined (e.g. `NotInRange` with `min` and `max`) to inform the clients of potential constraints on the input itself.
+Custom errors can be defined (e.g. `NotInRange` with `min` and `max`) to inform the clients of potential constraints on the input itself. It also supports recursive validation so that you can use nested `InputField`s and validation will be run all the way down to the scalars.
 
-It also supports recursive validation so that you can use nested `InputField`s and validation will be run all the way down to the scalars.
+Note that verbose messages aren't supported because I strongly believe those should be handled on the client (together with localization).
 
 ## Usage
 
@@ -102,3 +102,5 @@ And this is an example output:
 ## Limitations
 
 Since errors are listed in the `extensions` field of a generic `GraphQLError`, instead of using the typical [union based errors](https://blog.logrocket.com/handling-graphql-errors-like-a-champ-with-unions-and-interfaces/), errors aren't automatically discoverable. The ideal solution would be a hybrid that allows to decorate the mutation and obtain a union that can be used by the client for autodiscovery of the error types and metadata.
+
+An example query is added to [schema.py](input_validator/schema.py) to allow the client to discover error types and their metadata (TODO).
