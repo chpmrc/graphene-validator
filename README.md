@@ -6,9 +6,9 @@ The GraphQL Python ecosystem (i.e. `graphene`) lacks a proper way of validating 
 
 This library provides a class decorator `validate`, for mutations, that allows for field level and input level validation similarly to [DRF](https://www.django-rest-framework.org/) serializers' `validate` methods. To validate a field you'll need to declare a static method named `validate_{field_name}`. Input wide validation (e.g. for fields that depend on other fields) can be performed in the `validate` method. `validate` will only be called if all field level validation methods succeed.
 
-Field level errors also provide a `path` field that helps the client determine which slice of input is invalid, useful for rich forms and field highlighting on the UI.
+Field level errors also provide a `path` field that helps the client determine which slice of input is invalid, useful for rich forms and field highlighting on the UI. To indicate an invalid value the corresponding validation method should raise an instance of a subclass of `ValidationError`. Validation methods also allow to manipulate the value on the fly (for example to minimize DB queries by swapping an ID for the corresponding object) which will then replace the corresponding value in the main input (to be used in `validate` and the mutation itself).
 
-Custom errors can be defined (extending `ValidationError`, e.g. `NotInRange` with `min` and `max`) to inform the clients of potential constraints on the input itself (via an optional `meta` property). It also supports recursive validation so that you can use nested `InputField`s and validation will be performed all the way down to the scalars.
+Custom errors can be defined (e.g. `NotInRange` with `min` and `max`) to inform the clients of potential constraints on the input itself (via an optional `meta` property). It also supports recursive validation so that you can use nested `InputField`s and validation will be performed all the way down to the scalars.
 
 Note that verbose messages aren't supported because I strongly believe those should be handled on the client (together with localization).
 
