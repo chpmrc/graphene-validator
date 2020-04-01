@@ -103,4 +103,4 @@ And this is an example output:
 
 Since errors are listed in the `extensions` field of a generic `GraphQLError`, instead of using the typical [union based errors](https://blog.logrocket.com/handling-graphql-errors-like-a-champ-with-unions-and-interfaces/), errors aren't automatically discoverable. The ideal solution would be a hybrid that allows to decorate the mutation and obtain a union that can be used by the client for autodiscovery of the error types and metadata.
 
-An example query is added to [schema.py](input_validator/schema.py) to allow the client to discover error types and their metadata (TODO).
+An example graphene-django query is added to [schema.py](input_validator/schema.py) to allow the client to discover error types and their metadata (the latter is a TODO).
