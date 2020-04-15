@@ -140,4 +140,6 @@ def validated(cls):
                 )
             return cls.mutate(self, info, **kwargs)
 
+    Wrapper._meta.__dict__["name"] = cls._meta.name
+    Wrapper._meta.__dict__["description"] = cls._meta.description
     return Wrapper
