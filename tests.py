@@ -1,7 +1,7 @@
 import graphene
 
-from .input_validator.decorators import validated
-from .input_validator.errors import (
+from .graphene_validator.decorators import validated
+from .graphene_validator.errors import (
     EmptyString,
     InvalidEmailFormat,
     LengthNotInRange,

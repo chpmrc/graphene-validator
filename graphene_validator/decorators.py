@@ -88,7 +88,10 @@ def validated(cls):
             errors = []
             # Assume only a single input tree is given as kwarg
             input_key, input_tree = list(kwargs.items())[0]
-            root_validator = _unwrap_validator(getattr(cls.Arguments, input_key).type)
+            input_arg = getattr(cls.Arguments, input_key)
+            root_validator = _unwrap_validator(
+                getattr(input_arg, "get_type", lambda: input_arg.type)()
+            )
             # Run a BFS on the input tree, flattening everything to a list of fields to validate
             # and a list of subtrees to validate as a whole (for codependent fields)
             fields_to_validate, subtrees_to_validate = _unpack_input_tree(
@@ -101,8 +104,10 @@ def validated(cls):
                 path = _get_path(ftv)
                 try:
                     new_value = getattr(
-                        validator, f"validate_{name}", lambda value: value
-                    )(value)
+                        validator,
+                        f"validate_{name}",
+                        lambda value, info, **kwargs: value,
+                    )(value, info, **kwargs)
                     # If validator changed the value we need to update it in the input tree
                     if new_value != value:
                         # Grab a ref to the field to change by following the path in the input tree
@@ -121,7 +126,11 @@ def validated(cls):
                     value, validator = stv
                     try:
                         input_tree.update(
-                            getattr(validator, "validate", lambda values: values)(value)
+                            getattr(
+                                validator,
+                                "validate",
+                                lambda values, info, **kwargs: values,
+                            )(value, info)
                         )
                     except ValidationError as ve:
                         # Here we can't build the path so we let the caller customize it

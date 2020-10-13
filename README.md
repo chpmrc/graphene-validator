@@ -20,7 +20,7 @@ Here is an example usage (which you can find in [tests.py](tests.py) as well):
 
 ```python
 import graphene
-from input_validator.decorators import validated
+from graphene_validator.decorators import validated
 
 class TestInput(graphene.InputObjectType):
     email = graphene.String()
@@ -29,13 +29,13 @@ class TestInput(graphene.InputObjectType):
     person = graphene.InputField(PersonalDataInput)
 
     @staticmethod
-    def validate_email(email):
+    def validate_email(email, info, **input):
         if "@" not in email:
             raise InvalidEmailFormat
         return email.strip(" ")
 
     @staticmethod
-    def validate_numbers(numbers):
+    def validate_numbers(numbers, info, **input):
         if len(numbers) < 2:
             raise LengthNotInRange(min=2)
         for n in numbers:
@@ -44,24 +44,24 @@ class TestInput(graphene.InputObjectType):
         return numbers
 
     @staticmethod
-    def validate(inpt):
-        if inpt.get("people") and inpt.get("email"):
+    def validate(input):
+        if input.get("people") and input.get("email"):
             first_person_name_and_age = (
-                f"{inpt['people'][0]['the_name']}{inpt['people'][0]['the_age']}"
+                f"{input['people'][0]['the_name']}{input['people'][0]['the_age']}"
             )
-            if inpt["email"].split("@")[0] != first_person_name_and_age:
+            if input["email"].split("@")[0] != first_person_name_and_age:
                 raise NameAndAgeInEmail
-        return inpt
+        return input
 
 
 @validated
 class TestMutation(graphene.Mutation):
     class Arguments:
-        inpt = graphene.Argument(TestInput, name="input")
+        input = TestInput()
 
     result = graphene.String()
 
-    def mutate(self, _info, inpt):
+    def mutate(self, _info, input):
         return TestMutation(result="ok"))
 ```
 
@@ -98,18 +98,21 @@ And this is an example output:
         }
 ```
 
-### Manipulating input
+### Validating a field that depends on other fields or the request's context
 
 ```python
 class TestInput(graphene.InputObjectType):
-    expensive_object = graphene.Field(ExpensiveObjectType)
-    
+    first_field = graphene.String()
+    second_field = graphene.String()
+
     @staticmethod
-    def validate_expensive_object(expensive_object_id):
-        obj = ExpensiveModel.objects.filter(pk=expensive_object_id).first()
-        if not obj:
-            raise ObjectNotFound
-        return obj
+    def validate_first_field(first_field, info, **input):
+        second_field = input.get("second_field")
+        if second_field != "desired value":
+            raise InvalidSecondField
+        if info.context.user.role != "admin":
+            raise Unauthorized
+        return first_field
 
     ...
 ```
@@ -124,4 +127,4 @@ class TestInput(graphene.InputObjectType):
 
 Since errors are listed in the `extensions` field of a generic `GraphQLError`, instead of using the typical [union based errors](https://blog.logrocket.com/handling-graphql-errors-like-a-champ-with-unions-and-interfaces/), errors aren't automatically discoverable. The ideal solution would be a hybrid that allows to decorate the mutation and obtain a union that can be used by the client for autodiscovery of the error types and metadata.
 
-An example graphene-django query is added to [schema.py](input_validator/schema.py) to allow the client to discover error types and their metadata (the latter is a TODO).
+An example graphene-django query is added to [schema.py](graphene_validator/schema.py) to allow the client to discover error types and their metadata (the latter is a TODO).
