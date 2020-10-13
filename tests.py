@@ -1,14 +1,14 @@
-import functools
-
 import graphene
-from graphene import List, Scalar
-from graphene.types.inputfield import InputField
-from graphql import GraphQLError
 
-from input_validator.decorators import validated
-from input_validator.errors import (EmptyString, InvalidEmailFormat,
-                                    LengthNotInRange, NegativeValue,
-                                    NotInRange, ValidationError)
+from .input_validator.decorators import validated
+from .input_validator.errors import (
+    EmptyString,
+    InvalidEmailFormat,
+    LengthNotInRange,
+    NegativeValue,
+    NotInRange,
+    ValidationError,
+)
 
 # Some dummy errors
 
@@ -117,7 +117,10 @@ class TestValidation:
         request = dict(
             **TestValidation.REQUEST_TEMPLATE,
             variable_values={
-                "input": {"email": "invalid_email", "people": [{"theName": "", "theAge": "-1"}]}
+                "input": {
+                    "email": "invalid_email",
+                    "people": [{"theName": "", "theAge": "-1"}],
+                }
             },
         )
         result = schema.execute(**request)
@@ -131,7 +134,10 @@ class TestValidation:
         request = dict(
             **TestValidation.REQUEST_TEMPLATE,
             variable_values={
-                "input": {"email": "a0@b.c", "people": [{"theName": "a", "theAge": "0"}]}
+                "input": {
+                    "email": "a0@b.c",
+                    "people": [{"theName": "a", "theAge": "0"}],
+                }
             },
         )
         result = schema.execute(**request)
@@ -142,7 +148,10 @@ class TestValidation:
         request = dict(
             **TestValidation.REQUEST_TEMPLATE,
             variable_values={
-                "input": {"email": " a0@b.c ", "people": [{"theName": "a", "theAge": "0"}]}
+                "input": {
+                    "email": " a0@b.c ",
+                    "people": [{"theName": "a", "theAge": "0"}],
+                }
             },
         )
         result = schema.execute(**request)
@@ -153,7 +162,10 @@ class TestValidation:
         request = dict(
             **TestValidation.REQUEST_TEMPLATE,
             variable_values={
-                "input": {"email": "a1@b.c", "people": [{"theName": "a", "theAge": "0"}]}
+                "input": {
+                    "email": "a1@b.c",
+                    "people": [{"theName": "a", "theAge": "0"}],
+                }
             },
         )
         result = schema.execute(**request)
@@ -164,7 +176,8 @@ class TestValidation:
 
     def test_list_of_scalars_validation(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE, variable_values={"input": {"numbers": [1]}},
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={"input": {"numbers": [1]}},
         )
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]
@@ -176,21 +189,22 @@ class TestValidation:
     def test_nested_high_level_validate(self):
         request = dict(
             **TestValidation.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {"people": [{"theName": "0", "theAge": 0}]}},
+            variable_values={"input": {"people": [{"theName": "0", "theAge": 0}]}},
         )
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["name"]
         request["variable_values"] = {
-            "input": {"person": {"theName": "0", "theAge": 0}}}
+            "input": {"person": {"theName": "0", "theAge": 0}}
+        }
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["name"]
 
     def test_error_codes(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE, variable_values={"input": {"email": "asd"}},
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={"input": {"email": "asd"}},
         )
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]
@@ -198,7 +212,8 @@ class TestValidation:
 
     def test_range(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE, variable_values={"input": {"numbers": [-1, 0]}},
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={"input": {"numbers": [-1, 0]}},
         )
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]

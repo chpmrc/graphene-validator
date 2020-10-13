@@ -8,8 +8,6 @@ Ideally specific validation errors should be carefully named and be self explana
 from dataclasses import dataclass
 from typing import Any
 
-import graphene
-
 
 class ValidationError(ValueError):
     """

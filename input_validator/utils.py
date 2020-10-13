@@ -2,7 +2,9 @@ import graphene
 
 
 def _to_camel_case(name):
-    return "".join([word.title() if idx > 0 else word for idx, word in enumerate(name.split("_"))])
+    return "".join(
+        [word.title() if idx > 0 else word for idx, word in enumerate(name.split("_"))]
+    )
 
 
 def _get_path(field):
@@ -10,8 +12,7 @@ def _get_path(field):
     Reconstruct the path to the given field, including list indices.
     """
     name, _value, _validator, parent, idx = field
-    path = [idx, _to_camel_case(name)] if idx is not None else [
-        _to_camel_case(name)]
+    path = [idx, _to_camel_case(name)] if idx is not None else [_to_camel_case(name)]
     while parent:
         pname, _pvalue, _pvalidator, parent, pidx = parent
         path.insert(0, _to_camel_case(pname))
@@ -63,24 +64,26 @@ def _unpack_input_tree(input_tree, validator_cls):
             subtrees_to_validate.append((value, inner_validator))
             # Unpack nested input fields
             fields_to_unpack.extend(
-                (name, value, inner_validator, current, None) for name, value in value.items()
+                (name, value, inner_validator, current, None)
+                for name, value in value.items()
             )
         elif isinstance(field_type, graphene.List):
             # TODO(mc): better way to check if it's a scalar?
-            if isinstance(field_type.of_type._meta, graphene.types.scalars.ScalarOptions):
+            if isinstance(
+                field_type.of_type._meta, graphene.types.scalars.ScalarOptions
+            ):
                 # List of scalar types, validate
-                fields_to_validate.append(
-                    (name, value, validator, parent, None))
+                fields_to_validate.append((name, value, validator, parent, None))
             else:
                 # List of complex types, unpack
                 inner_validator = _unwrap_validator(field_type)
                 for idx, item in enumerate(value):
                     subtrees_to_validate.append((item, inner_validator))
                     fields_to_unpack.extend(
-                        (name, value, inner_validator, current, idx) for name, value in item.items()
+                        (name, value, inner_validator, current, idx)
+                        for name, value in item.items()
                     )
         else:
             # Scalar type, we can mark for validation!
-            fields_to_validate.append(
-                (name, value, validator, parent, idx))
+            fields_to_validate.append((name, value, validator, parent, idx))
     return fields_to_validate, subtrees_to_validate

@@ -1,13 +1,9 @@
 import functools
 
-import graphene
-from graphene import List, Scalar
-from graphene.types.inputfield import InputField
 from graphql import GraphQLError
 
 from .errors import ValidationError
-from .utils import (_get_path, _to_camel_case, _unpack_input_tree,
-                    _unwrap_validator)
+from .utils import _get_path, _unpack_input_tree, _unwrap_validator
 
 
 def validated(cls):
@@ -92,8 +88,7 @@ def validated(cls):
             errors = []
             # Assume only a single input tree is given as kwarg
             input_key, input_tree = list(kwargs.items())[0]
-            root_validator = _unwrap_validator(
-                getattr(cls.Arguments, input_key).type)
+            root_validator = _unwrap_validator(getattr(cls.Arguments, input_key).type)
             # Run a BFS on the input tree, flattening everything to a list of fields to validate
             # and a list of subtrees to validate as a whole (for codependent fields)
             fields_to_validate, subtrees_to_validate = _unpack_input_tree(
@@ -106,7 +101,8 @@ def validated(cls):
                 path = _get_path(ftv)
                 try:
                     new_value = getattr(
-                        validator, f"validate_{name}", lambda value: value)(value)
+                        validator, f"validate_{name}", lambda value: value
+                    )(value)
                     # If validator changed the value we need to update it in the input tree
                     if new_value != value:
                         # Grab a ref to the field to change by following the path in the input tree
@@ -115,8 +111,7 @@ def validated(cls):
                         )
                         field[name] = new_value
                 except ValidationError as ve:
-                    errors.append(
-                        {"code": str(ve), "path": path, "meta": ve.meta})
+                    errors.append({"code": str(ve), "path": path, "meta": ve.meta})
 
             # Don't run subtree level validation if one or more fields are invalid
             if not errors:
@@ -126,17 +121,18 @@ def validated(cls):
                     value, validator = stv
                     try:
                         input_tree.update(
-                            getattr(validator, f"validate",
-                                    lambda values: values)(value)
+                            getattr(validator, "validate", lambda values: values)(value)
                         )
                     except ValidationError as ve:
                         # Here we can't build the path so we let the caller customize it
                         errors.append(
-                            {"code": str(ve), "path": ve.path, "meta": ve.meta})
+                            {"code": str(ve), "path": ve.path, "meta": ve.meta}
+                        )
 
             if errors:
                 raise GraphQLError(
-                    message="ValidationError", extensions={"validationErrors": errors},
+                    message="ValidationError",
+                    extensions={"validationErrors": errors},
                 )
             return cls.mutate(self, info, **kwargs)
 
