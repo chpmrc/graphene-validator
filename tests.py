@@ -77,15 +77,19 @@ class TestInput(graphene.InputObjectType):
         return inpt
 
 
+class TestMutationOutput(graphene.ObjectType):
+    email = graphene.String()
+
+
 @validated
 class TestMutation(graphene.Mutation):
     class Arguments:
         _inpt = graphene.Argument(TestInput, name="input")
 
-    result = graphene.String()
+    Output = TestMutationOutput
 
     def mutate(self, _info, _inpt):
-        return TestMutation(result=_inpt.get("email"))
+        return TestMutationOutput(email=_inpt.get("email"))
 
 
 class Mutations(graphene.ObjectType):
@@ -101,7 +105,7 @@ class TestValidation:
         request_string="""
         mutation Test($input: TestInput!) {
             testMutation(input: $input) {
-                result
+                email
             }
         }"""
     )
@@ -142,7 +146,7 @@ class TestValidation:
         )
         result = schema.execute(**request)
         assert not result.errors
-        assert result.data["testMutation"]["result"] == "a0@b.c"
+        assert result.data["testMutation"]["email"] == "a0@b.c"
 
     def test_transform(self):
         request = dict(
@@ -156,7 +160,7 @@ class TestValidation:
         )
         result = schema.execute(**request)
         assert not result.errors
-        assert result.data["testMutation"]["result"] == "a0@b.c"
+        assert result.data["testMutation"]["email"] == "a0@b.c"
 
     def test_root_validate(self):
         request = dict(
