@@ -29,13 +29,13 @@ class TestInput(graphene.InputObjectType):
     person = graphene.InputField(PersonalDataInput)
 
     @staticmethod
-    def validate_email(email, info, **input):
+    def validate_email(email, info, **input_args):
         if "@" not in email:
             raise InvalidEmailFormat
         return email.strip(" ")
 
     @staticmethod
-    def validate_numbers(numbers, info, **input):
+    def validate_numbers(numbers, info, **input_args):
         if len(numbers) < 2:
             raise LengthNotInRange(min=2)
         for n in numbers:
@@ -44,7 +44,7 @@ class TestInput(graphene.InputObjectType):
         return numbers
 
     @staticmethod
-    def validate(input):
+    def validate(input, info):
         if input.get("people") and input.get("email"):
             first_person_name_and_age = (
                 f"{input['people'][0]['the_name']}{input['people'][0]['the_age']}"
@@ -106,8 +106,8 @@ class TestInput(graphene.InputObjectType):
     second_field = graphene.String()
 
     @staticmethod
-    def validate_first_field(first_field, info, **input):
-        second_field = input.get("second_field")
+    def validate_first_field(first_field, info, **input_args):
+        second_field = input_args.get("second_field")
         if second_field != "desired value":
             raise InvalidSecondField
         if info.context.user.role != "admin":

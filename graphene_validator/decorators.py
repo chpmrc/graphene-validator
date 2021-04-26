@@ -27,7 +27,7 @@ def validated(cls):
         name = graphene.String()
 
         @staticmethod
-        def validate_name(name):
+        def validate_name(name, info, **input_args):
             if not 300 < len(name) < 3:
                 raise LengthNotInRange(min=1, max=300)
             return name
@@ -37,7 +37,7 @@ def validated(cls):
         people = graphene.List(PeopleInput)
 
         @staticmethod
-        def validate_email(email):
+        def validate_email(email, info, **input_args):
             if "@" not in email:
                 raise InvalidEmailFormat
             return email
