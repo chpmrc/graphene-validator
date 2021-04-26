@@ -101,7 +101,6 @@ def validated(cls):
             # Run field level validation logic
             for ftv in fields_to_validate:
                 name, value, validator, _parent, _idx = ftv
-                path = _get_path(ftv)
                 try:
                     new_value = getattr(
                         validator,
@@ -110,12 +109,14 @@ def validated(cls):
                     )(value, info, **kwargs)
                     # If validator changed the value we need to update it in the input tree
                     if new_value != value:
+                        path = _get_path(ftv, False)
                         # Grab a ref to the field to change by following the path in the input tree
                         field = functools.reduce(
                             lambda obj, k: obj[k] if k else obj, path[:-1], input_tree
                         )
                         field[name] = new_value
                 except ValidationError as ve:
+                    path = _get_path(ftv)
                     errors.append({"code": str(ve), "path": path, "meta": ve.meta})
 
             # Don't run subtree level validation if one or more fields are invalid
