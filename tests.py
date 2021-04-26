@@ -30,7 +30,7 @@ class PersonalDataInput(graphene.InputObjectType):
     def validate_the_name(name, info, **input_args):
         if len(name) == 0:
             raise EmptyString
-        return name
+        return name.strip()
 
     @staticmethod
     def validate_the_age(age, info, **input_args):
@@ -49,7 +49,8 @@ class TestInput(graphene.InputObjectType):
     email = graphene.String()
     people = graphene.List(PersonalDataInput)
     numbers = graphene.List(graphene.Int)
-    person = graphene.InputField(PersonalDataInput)
+    # Check camelCasing too
+    the_person = graphene.InputField(PersonalDataInput)
 
     @staticmethod
     def validate_email(email, info, **input_args):
@@ -77,8 +78,13 @@ class TestInput(graphene.InputObjectType):
         return inpt
 
 
+class PersonalData(graphene.ObjectType):
+    the_name = graphene.String()
+
+
 class TestMutationOutput(graphene.ObjectType):
     email = graphene.String()
+    the_person = graphene.Field(PersonalData)
 
 
 @validated
@@ -89,7 +95,10 @@ class TestMutation(graphene.Mutation):
     Output = TestMutationOutput
 
     def mutate(self, _info, _inpt):
-        return TestMutationOutput(email=_inpt.get("email"))
+        return TestMutationOutput(
+            email=_inpt.get("email"),
+            the_person=_inpt.get("the_person"),
+        )
 
 
 class Mutations(graphene.ObjectType):
@@ -106,6 +115,9 @@ class TestValidation:
         mutation Test($input: TestInput!) {
             testMutation(input: $input) {
                 email
+                thePerson {
+                    theName
+                }
             }
         }"""
     )
@@ -154,13 +166,14 @@ class TestValidation:
             variable_values={
                 "input": {
                     "email": " a0@b.c ",
-                    "people": [{"theName": "a", "theAge": "0"}],
+                    "thePerson": {"theName": " a ", "theAge": "0"},
                 }
             },
         )
         result = schema.execute(**request)
         assert not result.errors
         assert result.data["testMutation"]["email"] == "a0@b.c"
+        assert result.data["testMutation"]["thePerson"]["theName"] == "a"
 
     def test_root_validate(self):
         request = dict(
@@ -199,7 +212,7 @@ class TestValidation:
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["name"]
         request["variable_values"] = {
-            "input": {"person": {"theName": "0", "theAge": 0}}
+            "input": {"thePerson": {"theName": "0", "theAge": 0}}
         }
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]

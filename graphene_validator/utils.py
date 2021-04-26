@@ -7,15 +7,16 @@ def _to_camel_case(name):
     )
 
 
-def _get_path(field):
+def _get_path(field, camel_case=True):
     """
     Reconstruct the path to the given field, including list indices.
     """
+    name_transform = _to_camel_case if camel_case else lambda text: text
     name, _value, _validator, parent, idx = field
-    path = [idx, _to_camel_case(name)] if idx is not None else [_to_camel_case(name)]
+    path = [idx, name_transform(name)] if idx is not None else [name_transform(name)]
     while parent:
         pname, _pvalue, _pvalidator, parent, pidx = parent
-        path.insert(0, _to_camel_case(pname))
+        path.insert(0, name_transform(pname))
         if pidx:
             path.insert(0, pidx)
     return path
