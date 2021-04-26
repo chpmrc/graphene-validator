@@ -27,19 +27,19 @@ class PersonalDataInput(graphene.InputObjectType):
     the_age = graphene.Int()
 
     @staticmethod
-    def validate_the_name(name):
+    def validate_the_name(name, info, **input_args):
         if len(name) == 0:
             raise EmptyString
         return name
 
     @staticmethod
-    def validate_the_age(age):
+    def validate_the_age(age, info, **input_args):
         if age < 0:
             raise NegativeValue
         return age
 
     @staticmethod
-    def validate(inpt):
+    def validate(inpt, info):
         if inpt["the_name"] == str(inpt["the_age"]):
             raise NameEqualsAge(path=["name"])
         return inpt
@@ -52,13 +52,13 @@ class TestInput(graphene.InputObjectType):
     person = graphene.InputField(PersonalDataInput)
 
     @staticmethod
-    def validate_email(email):
+    def validate_email(email, info, **input_args):
         if "@" not in email:
             raise InvalidEmailFormat
         return email.strip(" ")
 
     @staticmethod
-    def validate_numbers(numbers):
+    def validate_numbers(numbers, info, **input_args):
         if len(numbers) < 2:
             raise LengthNotInRange(min=2)
         for n in numbers:
@@ -67,7 +67,7 @@ class TestInput(graphene.InputObjectType):
         return numbers
 
     @staticmethod
-    def validate(inpt):
+    def validate(inpt, info):
         if inpt.get("people") and inpt.get("email"):
             first_person_name_and_age = (
                 f"{inpt['people'][0]['the_name']}{inpt['people'][0]['the_age']}"
