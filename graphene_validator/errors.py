@@ -6,7 +6,7 @@ Ideally specific validation errors should be carefully named and be self explana
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable, Mapping
 
 
 class ValidationError(ValueError):
@@ -31,6 +31,10 @@ class ValidationError(ValueError):
     @property
     def code(self):
         return self.__class__.__name__
+
+    @property
+    def error_details(self) -> Iterable[Mapping[str, Any]]:
+        return [{"code": self.code, "path": getattr(self, "path", None), "meta": self.meta}]
 
 
 class EmptyString(ValidationError):
