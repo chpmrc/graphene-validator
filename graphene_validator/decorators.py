@@ -116,8 +116,11 @@ def validated(cls):
                         )
                         field[name] = new_value
                 except ValidationError as ve:
-                    path = _get_path(ftv)
-                    errors.append({"code": str(ve), "path": path, "meta": ve.meta})
+                    # Insert the field's path into the error details
+                    common_detail = {"path": _get_path(ftv)}
+                    for error_detail in ve.error_details:
+                        error_detail.update(common_detail)
+                        errors.append(error_detail)
 
             # Don't run subtree level validation if one or more fields are invalid
             if not errors:
@@ -134,10 +137,7 @@ def validated(cls):
                             )(value, info)
                         )
                     except ValidationError as ve:
-                        # Here we can't build the path so we let the caller customize it
-                        errors.append(
-                            {"code": str(ve), "path": ve.path, "meta": ve.meta}
-                        )
+                        errors += list(ve.error_details)
 
             if errors:
                 raise GraphQLError(
