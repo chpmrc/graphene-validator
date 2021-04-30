@@ -1,8 +1,6 @@
 import functools
 
-from graphql import GraphQLError
-
-from .errors import ValidationError
+from .errors import ValidationError, ValidationGraphQLError
 from .utils import _get_path, _unpack_input_tree, _unwrap_validator
 
 
@@ -17,7 +15,8 @@ def validated(cls):
     whole input tree.
 
     The `validate_{field_name}` methods must raise a ValidationError instance
-    in case of invalid input. This will be converted into a proper GraphQLError.
+    in case of invalid input. The ValidationErrors are collected and any errors
+    are reported by raising a dedicated GraphQLError subclass, ValidationGraphQLError.
 
     Nested validators and lists are supported.
 
@@ -140,7 +139,7 @@ def validated(cls):
                         errors += list(ve.error_details)
 
             if errors:
-                raise GraphQLError(
+                raise ValidationGraphQLError(
                     message="ValidationError",
                     extensions={"validationErrors": errors},
                 )
