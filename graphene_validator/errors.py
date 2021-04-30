@@ -8,6 +8,8 @@ Ideally specific validation errors should be carefully named and be self explana
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
+from graphql import GraphQLError
+
 
 class ValidationError(ValueError):
     """
@@ -62,4 +64,8 @@ class NotInRange(SingleValidationError):
 
 
 class LengthNotInRange(NotInRange):
+    pass
+
+
+class ValidationGraphQLError(GraphQLError):
     pass
