@@ -7,17 +7,17 @@ from graphene_validator.errors import (
     LengthNotInRange,
     NegativeValue,
     NotInRange,
-    ValidationError,
+    SingleValidationError,
 )
 
 # Some dummy errors
 
 
-class NameEqualsAge(ValidationError):
+class NameEqualsAge(SingleValidationError):
     pass
 
 
-class NameAndAgeInEmail(ValidationError):
+class NameAndAgeInEmail(SingleValidationError):
     pass
 
 

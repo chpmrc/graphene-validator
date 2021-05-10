@@ -35,7 +35,7 @@ try:
                             if issubclass(error_class, ValidationError):
                                 error = error_class()
                                 errors.add((error.code,))
-                        except TypeError:
+                        except (TypeError, AttributeError):
                             # Not a real class...
                             continue
             return ({"code": error[0]} for error in errors)
