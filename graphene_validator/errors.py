@@ -24,10 +24,6 @@ class ValidationError(ValueError):
 
 
 class SingleValidationError(ValidationError):
-    def __init__(self, *args, path=[], **kwargs):
-        super().__init__(*args, **kwargs)
-        self.path = path
-
     @property
     def meta(self):
         """
@@ -40,7 +36,7 @@ class SingleValidationError(ValidationError):
 
     @property
     def error_details(self) -> Iterable[Mapping[str, Any]]:
-        return [{"code": self.code, "path": getattr(self, "path", None), "meta": self.meta}]
+        return [{"code": self.code, "meta": self.meta}]
 
 
 class EmptyString(SingleValidationError):

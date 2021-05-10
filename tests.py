@@ -14,7 +14,15 @@ from graphene_validator.errors import (
 
 
 class NameEqualsAge(SingleValidationError):
-    pass
+    def __init__(self, path):
+        self.path = path
+
+    @property
+    def error_details(self):
+        details = super().error_details
+        for detail in details:
+            detail["path"] = self.path
+        return details
 
 
 class NameAndAgeInEmail(SingleValidationError):
