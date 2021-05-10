@@ -15,12 +15,18 @@ class ValidationError(ValueError):
     in a mutation's input.
     """
 
+    def __str__(self):
+        return self.__class__.__name__
+
+    @property
+    def error_details(self) -> Iterable[Mapping[str, Any]]:
+        return []
+
+
+class SingleValidationError(ValidationError):
     def __init__(self, *args, path=[], **kwargs):
         super().__init__(*args, **kwargs)
         self.path = path
-
-    def __str__(self):
-        return self.__class__.__name__
 
     @property
     def meta(self):
@@ -37,20 +43,20 @@ class ValidationError(ValueError):
         return [{"code": self.code, "path": getattr(self, "path", None), "meta": self.meta}]
 
 
-class EmptyString(ValidationError):
+class EmptyString(SingleValidationError):
     pass
 
 
-class InvalidEmailFormat(ValidationError):
+class InvalidEmailFormat(SingleValidationError):
     pass
 
 
-class NegativeValue(ValidationError):
+class NegativeValue(SingleValidationError):
     pass
 
 
 @dataclass
-class NotInRange(ValidationError):
+class NotInRange(SingleValidationError):
     min: Any = None
     max: Any = None
 
