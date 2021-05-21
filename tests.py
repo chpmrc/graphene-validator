@@ -33,6 +33,7 @@ class PersonalDataInput(graphene.InputObjectType):
     # Check camelCasing too
     the_name = graphene.String()
     the_age = graphene.Int()
+    email = graphene.String()
 
     @staticmethod
     def validate_the_name(name, info, **input):
@@ -48,7 +49,7 @@ class PersonalDataInput(graphene.InputObjectType):
 
     @staticmethod
     def validate(inpt, info):
-        if inpt["the_name"] == str(inpt["the_age"]):
+        if inpt.get("the_name") == str(inpt.get("the_age")):
             raise NameEqualsAge(path=["name"])
         return inpt
 
@@ -182,6 +183,20 @@ class TestValidation:
         assert not result.errors
         assert result.data["testMutation"]["email"] == "a0@b.c"
         assert result.data["testMutation"]["thePerson"]["theName"] == "a"
+
+    def test_sub_trees_are_independent(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={
+                "input": {
+                    "email": "top.level@email",
+                    "thePerson": {"email": "sub.tree@email"},
+                }
+            },
+        )
+        result = schema.execute(**request)
+        assert not result.errors
+        assert result.data["testMutation"]["email"] == "top.level@email"
 
     def test_root_validate(self):
         request = dict(

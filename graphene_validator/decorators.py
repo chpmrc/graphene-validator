@@ -128,13 +128,11 @@ def validated(cls):
                 for stv in subtrees_to_validate:
                     value, validator = stv
                     try:
-                        input_tree.update(
-                            getattr(
-                                validator,
-                                "validate",
-                                lambda values, info, **kwargs: values,
-                            )(value, info)
-                        )
+                        getattr(
+                            validator,
+                            "validate",
+                            lambda values, info, **kwargs: values,
+                        )(value, info)
                     except ValidationError as ve:
                         errors += list(ve.error_details)
 
