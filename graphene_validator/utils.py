@@ -51,9 +51,21 @@ def _unpack_input_tree(input_tree, validator_cls):
     """
     fields_to_validate = []
     subtrees_to_validate = []
-    fields_to_unpack = [
-        (name, value, validator_cls, None, None) for name, value in input_tree.items()
-    ]
+    fields_to_unpack = []
+
+    def add_subtree_to_validate(tree, validator):
+        if tree is not None:
+            subtrees_to_validate.append((tree, validator))
+
+    def add_fields_to_unpack(tree, validator_cls, parent=None, index=None):
+        if tree is not None:
+            fields_to_unpack.extend(
+                (name, value, validator_cls, parent, index)
+                for name, value in tree.items()
+            )
+
+    add_fields_to_unpack(input_tree, validator_cls)
+
     while fields_to_unpack:
         current = fields_to_unpack.pop(0)
         name, value, validator, parent, idx = current
@@ -62,12 +74,9 @@ def _unpack_input_tree(input_tree, validator_cls):
         field_type = getattr(validator, name)
         if isinstance(field_type, graphene.types.inputfield.InputField):
             inner_validator = _unwrap_validator(field_type.type)
-            subtrees_to_validate.append((value, inner_validator))
+            add_subtree_to_validate(value, inner_validator)
             # Unpack nested input fields
-            fields_to_unpack.extend(
-                (name, value, inner_validator, current, None)
-                for name, value in value.items()
-            )
+            add_fields_to_unpack(value, inner_validator, current)
         elif isinstance(field_type, graphene.List):
             # TODO(mc): better way to check if it's a scalar?
             if isinstance(

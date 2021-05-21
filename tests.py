@@ -260,3 +260,15 @@ class TestValidation:
         assert validation_errors[0]["code"] == NotInRange.__name__
         assert validation_errors[0]["meta"]["min"] == 0
         assert validation_errors[0]["meta"]["max"] == 9
+
+    def test_handling_inner_null_input_object(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={
+                "input": {
+                    "thePerson": None,
+                }
+            },
+        )
+        result = schema.execute(**request)
+        assert not result.errors
