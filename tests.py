@@ -285,3 +285,11 @@ class TestValidation:
         )
         result = schema.execute(**request)
         assert not result.errors
+
+    def test_handling_null_input_object_in_a_list(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={"input": {"people": [None]}},
+        )
+        result = schema.execute(**request)
+        assert not result.errors
