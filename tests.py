@@ -103,7 +103,10 @@ class TestMutation(graphene.Mutation):
 
     Output = TestMutationOutput
 
-    def mutate(self, _info, _inpt):
+    def mutate(self, _info, _inpt=None):
+        if _inpt is None:
+            _inpt = {}
+
         return TestMutationOutput(
             email=_inpt.get("email"),
             the_person=_inpt.get("the_person"),
@@ -121,7 +124,7 @@ class TestValidation:
 
     REQUEST_TEMPLATE = dict(
         request_string="""
-        mutation Test($input: TestInput!) {
+        mutation Test($input: TestInput) {
             testMutation(input: $input) {
                 email
                 thePerson {
@@ -260,6 +263,16 @@ class TestValidation:
         assert validation_errors[0]["code"] == NotInRange.__name__
         assert validation_errors[0]["meta"]["min"] == 0
         assert validation_errors[0]["meta"]["max"] == 9
+
+    def test_handling_top_level_null_input_object(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={
+                "input": None,
+            },
+        )
+        result = schema.execute(**request)
+        assert not result.errors
 
     def test_handling_inner_null_input_object(self):
         request = dict(
