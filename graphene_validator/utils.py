@@ -88,11 +88,8 @@ def _unpack_input_tree(input_tree, validator_cls):
                 # List of complex types, unpack
                 inner_validator = _unwrap_validator(field_type)
                 for idx, item in enumerate(value):
-                    subtrees_to_validate.append((item, inner_validator))
-                    fields_to_unpack.extend(
-                        (name, value, inner_validator, current, idx)
-                        for name, value in item.items()
-                    )
+                    add_subtree_to_validate(item, inner_validator)
+                    add_fields_to_unpack(item, inner_validator, current, idx)
         else:
             # Scalar type, we can mark for validation!
             fields_to_validate.append((name, value, validator, parent, idx))
