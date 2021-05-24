@@ -83,7 +83,7 @@ def validated(cls):
     """
 
     class Wrapper(cls):
-        def mutate(self, info, **kwargs):  # pylint: disable=too-many-locals
+        def mutate(parent, info, **kwargs):  # pylint: disable=too-many-locals
             errors = []
             # Assume only a single input tree is given as kwarg
             input_key, input_tree = list(kwargs.items())[0]
@@ -143,7 +143,8 @@ def validated(cls):
                     message="ValidationError",
                     extensions={"validationErrors": errors},
                 )
-            return cls.mutate(self, info, **kwargs)
+
+            return cls.mutate(parent, info, **kwargs)
 
     Wrapper._meta.__dict__["name"] = cls._meta.name
     Wrapper._meta.__dict__["description"] = cls._meta.description
