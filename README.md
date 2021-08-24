@@ -44,7 +44,7 @@ class TestInput(graphene.InputObjectType):
         return numbers
 
     @staticmethod
-    def validate(input):
+    def validate(input, info):
         if input.get("people") and input.get("email"):
             first_person_name_and_age = (
                 f"{input['people'][0]['the_name']}{input['people'][0]['the_age']}"
@@ -119,7 +119,7 @@ class TestInput(graphene.InputObjectType):
 
 ## Running tests
 
-`pip install -r requirements.txt`
+`pip install -e .`
 
 `pytest tests.py`
 
