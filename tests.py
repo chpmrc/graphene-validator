@@ -7,17 +7,25 @@ from graphene_validator.errors import (
     LengthNotInRange,
     NegativeValue,
     NotInRange,
-    ValidationError,
+    SingleValidationError,
 )
 
 # Some dummy errors
 
 
-class NameEqualsAge(ValidationError):
-    pass
+class NameEqualsAge(SingleValidationError):
+    def __init__(self, path):
+        self.path = path
+
+    @property
+    def error_details(self):
+        details = super().error_details
+        for detail in details:
+            detail["path"] = self.path
+        return details
 
 
-class NameAndAgeInEmail(ValidationError):
+class NameAndAgeInEmail(SingleValidationError):
     pass
 
 
@@ -25,12 +33,13 @@ class PersonalDataInput(graphene.InputObjectType):
     # Check camelCasing too
     the_name = graphene.String()
     the_age = graphene.Int()
+    email = graphene.String()
 
     @staticmethod
     def validate_the_name(name, info, **input):
         if len(name) == 0:
             raise EmptyString
-        return name
+        return name.strip()
 
     @staticmethod
     def validate_the_age(age, info, **input):
@@ -40,7 +49,7 @@ class PersonalDataInput(graphene.InputObjectType):
 
     @staticmethod
     def validate(inpt, info):
-        if inpt["the_name"] == str(inpt["the_age"]):
+        if inpt.get("the_name") == str(inpt.get("the_age")):
             raise NameEqualsAge(path=["name"])
         return inpt
 
@@ -49,7 +58,8 @@ class TestInput(graphene.InputObjectType):
     email = graphene.String()
     people = graphene.List(PersonalDataInput)
     numbers = graphene.List(graphene.Int)
-    person = graphene.InputField(PersonalDataInput)
+    # Check camelCasing too
+    the_person = graphene.InputField(PersonalDataInput)
 
     @staticmethod
     def validate_email(email, info, **input):
@@ -77,15 +87,30 @@ class TestInput(graphene.InputObjectType):
         return inpt
 
 
+class PersonalData(graphene.ObjectType):
+    the_name = graphene.String()
+
+
+class TestMutationOutput(graphene.ObjectType):
+    email = graphene.String()
+    the_person = graphene.Field(PersonalData)
+
+
 @validated
 class TestMutation(graphene.Mutation):
     class Arguments:
         _inpt = graphene.Argument(TestInput, name="input")
 
-    result = graphene.String()
+    Output = TestMutationOutput
 
-    def mutate(self, _info, _inpt):
-        return TestMutation(result=_inpt.get("email"))
+    def mutate(self, _info, _inpt=None):
+        if _inpt is None:
+            _inpt = {}
+
+        return TestMutationOutput(
+            email=_inpt.get("email"),
+            the_person=_inpt.get("the_person"),
+        )
 
 
 class Mutations(graphene.ObjectType):
@@ -99,9 +124,12 @@ class TestValidation:
 
     REQUEST_TEMPLATE = dict(
         request_string="""
-        mutation Test($input: TestInput!) {
+        mutation Test($input: TestInput) {
             testMutation(input: $input) {
-                result
+                email
+                thePerson {
+                    theName
+                }
             }
         }"""
     )
@@ -142,7 +170,7 @@ class TestValidation:
         )
         result = schema.execute(**request)
         assert not result.errors
-        assert result.data["testMutation"]["result"] == "a0@b.c"
+        assert result.data["testMutation"]["email"] == "a0@b.c"
 
     def test_transform(self):
         request = dict(
@@ -150,13 +178,28 @@ class TestValidation:
             variable_values={
                 "input": {
                     "email": " a0@b.c ",
-                    "people": [{"theName": "a", "theAge": "0"}],
+                    "thePerson": {"theName": " a ", "theAge": "0"},
                 }
             },
         )
         result = schema.execute(**request)
         assert not result.errors
-        assert result.data["testMutation"]["result"] == "a0@b.c"
+        assert result.data["testMutation"]["email"] == "a0@b.c"
+        assert result.data["testMutation"]["thePerson"]["theName"] == "a"
+
+    def test_sub_trees_are_independent(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={
+                "input": {
+                    "email": "top.level@email",
+                    "thePerson": {"email": "sub.tree@email"},
+                }
+            },
+        )
+        result = schema.execute(**request)
+        assert not result.errors
+        assert result.data["testMutation"]["email"] == "top.level@email"
 
     def test_root_validate(self):
         request = dict(
@@ -195,7 +238,7 @@ class TestValidation:
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["name"]
         request["variable_values"] = {
-            "input": {"person": {"theName": "0", "theAge": 0}}
+            "input": {"thePerson": {"theName": "0", "theAge": 0}}
         }
         result = schema.execute(**request)
         validation_errors = result.errors[0].extensions["validationErrors"]
@@ -220,3 +263,33 @@ class TestValidation:
         assert validation_errors[0]["code"] == NotInRange.__name__
         assert validation_errors[0]["meta"]["min"] == 0
         assert validation_errors[0]["meta"]["max"] == 9
+
+    def test_handling_top_level_null_input_object(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={
+                "input": None,
+            },
+        )
+        result = schema.execute(**request)
+        assert not result.errors
+
+    def test_handling_inner_null_input_object(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={
+                "input": {
+                    "thePerson": None,
+                }
+            },
+        )
+        result = schema.execute(**request)
+        assert not result.errors
+
+    def test_handling_null_input_object_in_a_list(self):
+        request = dict(
+            **TestValidation.REQUEST_TEMPLATE,
+            variable_values={"input": {"people": [None]}},
+        )
+        result = schema.execute(**request)
+        assert not result.errors

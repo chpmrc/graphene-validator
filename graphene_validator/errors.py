@@ -6,7 +6,9 @@ Ideally specific validation errors should be carefully named and be self explana
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable, Mapping
+
+from graphql import GraphQLError
 
 
 class ValidationError(ValueError):
@@ -15,13 +17,15 @@ class ValidationError(ValueError):
     in a mutation's input.
     """
 
-    def __init__(self, *args, path=[], **kwargs):
-        super().__init__(*args, **kwargs)
-        self.path = path
-
     def __str__(self):
         return self.__class__.__name__
 
+    @property
+    def error_details(self) -> Iterable[Mapping[str, Any]]:
+        return []
+
+
+class SingleValidationError(ValidationError):
     @property
     def meta(self):
         """
@@ -32,21 +36,25 @@ class ValidationError(ValueError):
     def code(self):
         return self.__class__.__name__
 
+    @property
+    def error_details(self) -> Iterable[Mapping[str, Any]]:
+        return [{"code": self.code, "meta": self.meta}]
 
-class EmptyString(ValidationError):
+
+class EmptyString(SingleValidationError):
     pass
 
 
-class InvalidEmailFormat(ValidationError):
+class InvalidEmailFormat(SingleValidationError):
     pass
 
 
-class NegativeValue(ValidationError):
+class NegativeValue(SingleValidationError):
     pass
 
 
 @dataclass
-class NotInRange(ValidationError):
+class NotInRange(SingleValidationError):
     min: Any = None
     max: Any = None
 
@@ -56,4 +64,8 @@ class NotInRange(ValidationError):
 
 
 class LengthNotInRange(NotInRange):
+    pass
+
+
+class ValidationGraphQLError(GraphQLError):
     pass
