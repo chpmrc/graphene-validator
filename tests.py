@@ -54,7 +54,7 @@ class PersonalDataInput(graphene.InputObjectType):
         return inpt
 
 
-class TestInput(graphene.InputObjectType):
+class InputForTests(graphene.InputObjectType):
     email = graphene.String()
     people = graphene.List(PersonalDataInput)
     numbers = graphene.List(graphene.Int)
@@ -91,30 +91,30 @@ class PersonalData(graphene.ObjectType):
     the_name = graphene.String()
 
 
-class TestMutationOutput(graphene.ObjectType):
+class OutputForTests(graphene.ObjectType):
     email = graphene.String()
     the_person = graphene.Field(PersonalData)
 
 
 @validated
-class TestMutation(graphene.Mutation):
+class MutationForTests(graphene.Mutation):
     class Arguments:
-        _inpt = graphene.Argument(TestInput, name="input")
+        _inpt = graphene.Argument(InputForTests, name="input")
 
-    Output = TestMutationOutput
+    Output = OutputForTests
 
     def mutate(self, _info, _inpt=None):
         if _inpt is None:
             _inpt = {}
 
-        return TestMutationOutput(
+        return OutputForTests(
             email=_inpt.get("email"),
             the_person=_inpt.get("the_person"),
         )
 
 
 class Mutations(graphene.ObjectType):
-    test_mutation = TestMutation.Field()
+    test_mutation = MutationForTests.Field()
 
 
 schema = graphene.Schema(mutation=Mutations)
@@ -124,7 +124,7 @@ class TestValidation:
 
     REQUEST_TEMPLATE = dict(
         request_string="""
-        mutation Test($input: TestInput) {
+        mutation Test($input: InputForTests) {
             testMutation(input: $input) {
                 email
                 thePerson {
