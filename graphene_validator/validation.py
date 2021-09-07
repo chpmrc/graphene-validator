@@ -54,16 +54,20 @@ def _do_validation(info, input_tree, input_arg, **kwargs):
             except ValidationError as ve:
                 errors += list(ve.error_details)
 
+    return errors
+
+
+def validate(cls, root, info, **mutation_input):
+    errors = []
+
+    input_class = getattr(cls, "Input", None) or cls.Arguments
+
+    for input_key, input_tree in mutation_input.items():
+        input_arg = getattr(input_class, input_key)
+        errors += _do_validation(info, input_tree, input_arg, **mutation_input)
+
     if errors:
         raise ValidationGraphQLError(
             message="ValidationError",
             extensions={"validationErrors": errors},
         )
-
-
-def validate(cls, root, info, **mutation_input):
-    if mutation_input:
-        # Assume only a single input tree is given in mutation_input
-        input_key, input_tree = list(mutation_input.items())[0]
-        input_arg = getattr(cls.Arguments, input_key)
-        _do_validation(info, input_tree, input_arg, **mutation_input)

@@ -96,10 +96,13 @@ class OutputForTests(graphene.ObjectType):
 
 
 class ValidationTestSuite:
+    def build_input(self, input):
+        return input
+
     def _execute_query(self, input):
         return self.schema.execute(
             request_string=self.request,
-            variable_values=input,
+            variable_values=self.build_input(input),
         )
 
     def test_simple_validation(self):
