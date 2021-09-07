@@ -91,36 +91,23 @@ class PersonalData(graphene.ObjectType):
 
 
 class ValidationTestSuite:
-    REQUEST_TEMPLATE = dict(
-        request_string="""
-        mutation Test($input: InputForTests) {
-            testMutation(input: $input) {
-                email
-                thePerson {
-                    theName
-                }
-            }
-        }"""
-    )
+    def _execute_query(self, input):
+        return self.schema.execute(
+            request_string=self.request,
+            variable_values=input,
+        )
 
     def test_simple_validation(self):
-        result = self.schema.execute(
-            **self.REQUEST_TEMPLATE,
-            variable_values={"input": {"email": "invalid_email"}},
-        )
+        result = self._execute_query({"input": {"email": "invalid_email"}})
         assert result.errors[0].message == "ValidationError"
 
     def test_nested_validation(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {
-                    "email": "invalid_email",
-                    "people": [{"theName": "", "theAge": "-1"}],
-                }
-            },
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({
+            "input": {
+                "email": "invalid_email",
+                "people": [{"theName": "", "theAge": "-1"}],
+            }
+        })
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert result.errors[0].message == "ValidationError"
         assert validation_errors[0]["path"] == ["email"]
@@ -128,137 +115,98 @@ class ValidationTestSuite:
         assert validation_errors[2]["path"] == ["people", 0, "theAge"]
 
     def test_valid_input(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {
-                    "email": "a0@b.c",
-                    "people": [{"theName": "a", "theAge": "0"}],
-                }
-            },
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({
+            "input": {
+                "email": "a0@b.c",
+                "people": [{"theName": "a", "theAge": "0"}],
+            }
+        })
         assert not result.errors
         assert result.data["testMutation"]["email"] == "a0@b.c"
 
     def test_transform(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {
-                    "email": " a0@b.c ",
-                    "thePerson": {"theName": " a ", "theAge": "0"},
-                }
-            },
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({
+            "input": {
+                "email": " a0@b.c ",
+                "thePerson": {"theName": " a ", "theAge": "0"},
+            }
+        })
         assert not result.errors
         assert result.data["testMutation"]["email"] == "a0@b.c"
         assert result.data["testMutation"]["thePerson"]["theName"] == "a"
 
     def test_sub_trees_are_independent(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {
-                    "email": "top.level@email",
-                    "thePerson": {"email": "sub.tree@email"},
-                }
-            },
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({
+            "input": {
+                "email": "top.level@email",
+                "thePerson": {"email": "sub.tree@email"},
+            }
+        })
         assert not result.errors
         assert result.data["testMutation"]["email"] == "top.level@email"
 
     def test_root_validate(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {
-                    "email": "a1@b.c",
-                    "people": [{"theName": "a", "theAge": "0"}],
-                }
-            },
-        )
-        result = self.schema.execute(**request)
+        input = {
+            "input": {
+                "email": "a1@b.c",
+                "people": [{"theName": "a", "theAge": "0"}],
+            }
+        }
+
+        result = self._execute_query(input)
         assert result.errors[0].message == "ValidationError"
-        request["variable_values"]["input"]["email"] = "a0@b.c"
-        result = self.schema.execute(**request)
+
+        input["input"]["email"] = "a0@b.c"
+        result = self._execute_query(input)
         assert not result.errors
 
     def test_list_of_scalars_validation(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={"input": {"numbers": [1]}},
-        )
-        result = self.schema.execute(**request)
+        input = {"input": {"numbers": [1]}}
+
+        result = self._execute_query(input)
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["numbers"]
-        request["variable_values"]["input"]["numbers"] = [1, 2]
-        result = self.schema.execute(**request)
+
+        input["input"]["numbers"] = [1, 2]
+        result = self._execute_query(input)
         assert not result.errors
 
     def test_nested_high_level_validate(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={"input": {"people": [{"theName": "0", "theAge": 0}]}},
-        )
-        result = self.schema.execute(**request)
+        input = {"input": {"people": [{"theName": "0", "theAge": 0}]}}
+
+        result = self._execute_query(input)
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["name"]
-        request["variable_values"] = {
-            "input": {"thePerson": {"theName": "0", "theAge": 0}}
-        }
-        result = self.schema.execute(**request)
+
+        input = {"input": {"thePerson": {"theName": "0", "theAge": 0}}}
+        result = self._execute_query(input)
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["path"] == ["name"]
 
     def test_error_codes(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={"input": {"email": "asd"}},
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({"input": {"email": "asd"}})
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["code"] == InvalidEmailFormat.__name__
 
     def test_range(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={"input": {"numbers": [-1, 0]}},
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({"input": {"numbers": [-1, 0]}})
         validation_errors = result.errors[0].extensions["validationErrors"]
         assert validation_errors[0]["code"] == NotInRange.__name__
         assert validation_errors[0]["meta"]["min"] == 0
         assert validation_errors[0]["meta"]["max"] == 9
 
     def test_handling_top_level_null_input_object(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": None,
-            },
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({"input": None})
         assert not result.errors
 
     def test_handling_inner_null_input_object(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={
-                "input": {
-                    "thePerson": None,
-                }
-            },
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({
+            "input": {
+                "thePerson": None,
+            }
+        })
         assert not result.errors
 
     def test_handling_null_input_object_in_a_list(self):
-        request = dict(
-            **self.REQUEST_TEMPLATE,
-            variable_values={"input": {"people": [None]}},
-        )
-        result = self.schema.execute(**request)
+        result = self._execute_query({"input": {"people": [None]}})
         assert not result.errors

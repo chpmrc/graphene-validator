@@ -31,4 +31,13 @@ class Mutations(graphene.ObjectType):
 
 
 class TestDecorators(ValidationTestSuite):
+    request = """
+        mutation Test($input: InputForTests) {
+            testMutation(input: $input) {
+                email
+                thePerson {
+                    theName
+                }
+            }
+        }"""
     schema = graphene.Schema(mutation=Mutations)
