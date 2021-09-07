@@ -43,7 +43,6 @@ def _do_validation(info, input_tree, input_arg, **kwargs):
     # Don't run subtree level validation if one or more fields are invalid
     if not errors:
         # Run validation logic for the input subtrees
-        subtrees_to_validate.append((input_tree, root_validator))
         for stv in subtrees_to_validate:
             value, validator = stv
             try:

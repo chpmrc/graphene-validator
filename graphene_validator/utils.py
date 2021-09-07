@@ -64,6 +64,7 @@ def _unpack_input_tree(input_tree, validator_cls):
                 for name, value in tree.items()
             )
 
+    add_subtree_to_validate(input_tree, validator_cls)
     add_fields_to_unpack(input_tree, validator_cls)
 
     while fields_to_unpack:
