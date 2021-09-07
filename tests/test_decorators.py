@@ -97,7 +97,7 @@ class OutputForTests(graphene.ObjectType):
 
 
 @validated
-class MutationForTests(graphene.Mutation):
+class DecoratorMutation(graphene.Mutation):
     class Arguments:
         _inpt = graphene.Argument(InputForTests, name="input")
 
@@ -114,13 +114,13 @@ class MutationForTests(graphene.Mutation):
 
 
 class Mutations(graphene.ObjectType):
-    test_mutation = MutationForTests.Field()
+    test_mutation = DecoratorMutation.Field()
 
 
 schema = graphene.Schema(mutation=Mutations)
 
 
-class TestValidation:
+class TestDecorators:
 
     REQUEST_TEMPLATE = dict(
         request_string="""
@@ -136,14 +136,14 @@ class TestValidation:
 
     def test_simple_validation(self):
         result = schema.execute(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={"input": {"email": "invalid_email"}},
         )
         assert result.errors[0].message == "ValidationError"
 
     def test_nested_validation(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": {
                     "email": "invalid_email",
@@ -160,7 +160,7 @@ class TestValidation:
 
     def test_valid_input(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": {
                     "email": "a0@b.c",
@@ -174,7 +174,7 @@ class TestValidation:
 
     def test_transform(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": {
                     "email": " a0@b.c ",
@@ -189,7 +189,7 @@ class TestValidation:
 
     def test_sub_trees_are_independent(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": {
                     "email": "top.level@email",
@@ -203,7 +203,7 @@ class TestValidation:
 
     def test_root_validate(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": {
                     "email": "a1@b.c",
@@ -219,7 +219,7 @@ class TestValidation:
 
     def test_list_of_scalars_validation(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={"input": {"numbers": [1]}},
         )
         result = schema.execute(**request)
@@ -231,7 +231,7 @@ class TestValidation:
 
     def test_nested_high_level_validate(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={"input": {"people": [{"theName": "0", "theAge": 0}]}},
         )
         result = schema.execute(**request)
@@ -246,7 +246,7 @@ class TestValidation:
 
     def test_error_codes(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={"input": {"email": "asd"}},
         )
         result = schema.execute(**request)
@@ -255,7 +255,7 @@ class TestValidation:
 
     def test_range(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={"input": {"numbers": [-1, 0]}},
         )
         result = schema.execute(**request)
@@ -266,7 +266,7 @@ class TestValidation:
 
     def test_handling_top_level_null_input_object(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": None,
             },
@@ -276,7 +276,7 @@ class TestValidation:
 
     def test_handling_inner_null_input_object(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={
                 "input": {
                     "thePerson": None,
@@ -288,7 +288,7 @@ class TestValidation:
 
     def test_handling_null_input_object_in_a_list(self):
         request = dict(
-            **TestValidation.REQUEST_TEMPLATE,
+            **TestDecorators.REQUEST_TEMPLATE,
             variable_values={"input": {"people": [None]}},
         )
         result = schema.execute(**request)

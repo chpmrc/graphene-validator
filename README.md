@@ -127,7 +127,7 @@ class TestInput(graphene.InputObjectType):
 
 `pip install -e .`
 
-`pytest tests.py`
+`pytest`
 
 ## Limitations
 
