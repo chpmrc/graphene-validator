@@ -59,3 +59,11 @@ def _do_validation(info, input_tree, input_arg, **kwargs):
             message="ValidationError",
             extensions={"validationErrors": errors},
         )
+
+
+def validate(cls, root, info, **mutation_input):
+    if mutation_input:
+        # Assume only a single input tree is given in mutation_input
+        input_key, input_tree = list(mutation_input.items())[0]
+        input_arg = getattr(cls.Arguments, input_key)
+        _do_validation(info, input_tree, input_arg, **mutation_input)

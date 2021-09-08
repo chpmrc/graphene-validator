@@ -1,4 +1,4 @@
-from .validation import _do_validation
+from .validation import validate
 
 
 def validated(cls):
@@ -81,12 +81,7 @@ def validated(cls):
 
     class Wrapper(cls):
         def mutate(parent, info, **kwargs):  # pylint: disable=too-many-locals
-            if kwargs:
-                # Assume only a single input tree is given as kwarg
-                input_key, input_tree = list(kwargs.items())[0]
-                input_arg = getattr(cls.Arguments, input_key)
-                _do_validation(info, input_tree, input_arg, **kwargs)
-
+            validate(cls, parent, info, **kwargs)
             return cls.mutate(parent, info, **kwargs)
 
     Wrapper._meta.__dict__["name"] = cls._meta.name

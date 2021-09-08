@@ -90,6 +90,11 @@ class PersonalData(graphene.ObjectType):
     the_name = graphene.String()
 
 
+class OutputForTests(graphene.ObjectType):
+    email = graphene.String()
+    the_person = graphene.Field(PersonalData)
+
+
 class ValidationTestSuite:
     def _execute_query(self, input):
         return self.schema.execute(

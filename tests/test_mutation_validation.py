@@ -1,31 +1,33 @@
 import graphene
 
-from graphene_validator.decorators import validated
+from graphene_validator.validation import validate
 from .validation_test_suite import InputForTests, OutputForTests, ValidationTestSuite
 
 
-@validated
-class DecoratorMutation(graphene.Mutation):
+class ValidatingMutation(graphene.Mutation):
     class Arguments:
-        _inpt = graphene.Argument(InputForTests, name="input")
+        _input = graphene.Argument(InputForTests, name="input")
 
     Output = OutputForTests
 
-    def mutate(self, _info, _inpt=None):
-        if _inpt is None:
-            _inpt = {}
+    @classmethod
+    def mutate(cls, root, info, _input=None):
+        validate(cls, root, info, _input=_input)
+
+        if _input is None:
+            _input = {}
 
         return OutputForTests(
-            email=_inpt.get("email"),
-            the_person=_inpt.get("the_person"),
+            email=_input.get("email"),
+            the_person=_input.get("the_person"),
         )
 
 
 class Mutations(graphene.ObjectType):
-    test_mutation = DecoratorMutation.Field()
+    test_mutation = ValidatingMutation.Field()
 
 
-class TestDecorators(ValidationTestSuite):
+class TestMutationValidation(ValidationTestSuite):
     request = """
         mutation Test($input: InputForTests) {
             testMutation(input: $input) {
