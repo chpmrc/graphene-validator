@@ -1,6 +1,18 @@
 # Graphene input validator
 
-**Important**: this is a proof of concept and most likely not ready for production use.
+## Quickstart
+
+`pip install graphene-validator`
+
+```
+from graphene_validator.decorators import validated
+
+@validated
+class MyMutation(graphene.Mutation):
+    ...
+```
+
+## Description
 
 The GraphQL Python ecosystem (i.e. `graphene`) lacks a proper way of validating input and returning meaningful errors to the client. This PoC aims at solving that. The client will know it needs to look into `extensions` for validation errors because of the error message `ValidationError`.
 
